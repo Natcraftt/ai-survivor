@@ -11,8 +11,8 @@ ATTENDRE = Action.ATTENDRE
 
 
 def monde(seed=0, **reglages):
-    """Monde de test. Par défaut : aucun zombie au départ et aucune apparition."""
-    base = {"n_zombies": 0, "spawn_prob": 0.0}
+    """Monde de test. Par défaut : aucun zombie, aucune apparition, aucun objet sur la carte."""
+    base = {"n_zombies": 0, "spawn_prob": 0.0, "place_items": False}
     base.update(reglages)
     return World(WorldConfig(**base), seed=seed)
 
@@ -123,7 +123,10 @@ def test_les_decalages_correspondent_aux_directions():
     assert MOVES[Action.BAS] == (0, 1)
     assert MOVES[Action.GAUCHE] == (-1, 0)
     assert MOVES[Action.DROITE] == (1, 0)
+    # Ces actions ne déplacent pas le joueur : elles ne doivent pas avoir de décalage.
     assert ATTENDRE not in MOVES
+    assert Action.ATTAQUER not in MOVES
+    assert Action.SOIGNER not in MOVES
 
 
 def test_attendre_ne_bouge_pas_mais_le_tour_avance():

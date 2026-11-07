@@ -9,9 +9,10 @@ class Action(IntEnum):
     BAS = 2
     GAUCHE = 3
     ATTENDRE = 4
+    ATTAQUER = 5
+    SOIGNER = 6
 
 
-# Décalage (dx, dy) de chaque déplacement. x vers la droite, y vers le bas.
 MOVES = {
     Action.HAUT: (0, -1),
     Action.DROITE: (1, 0),
