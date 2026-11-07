@@ -17,7 +17,10 @@ def monde(seed=0, **reglages):
 
     zombie_move_prob=0 par défaut : les zombies restent là où on les met (sauf s'ils attaquent).
     """
-    base = {"n_zombies": 0, "spawn_prob": 0.0, "place_items": False, "zombie_move_prob": 0.0}
+    base = {
+        "n_zombies": 0, "spawn_prob": 0.0, "place_items": False, "zombie_move_prob": 0.0,
+        "wall_density": 0.0, "random_start": False,  # arène vide, joueur au centre
+    }
     base.update(reglages)
     return World(WorldConfig(**base), seed=seed)
 

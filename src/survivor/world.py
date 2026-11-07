@@ -3,6 +3,9 @@
 Aucune dépendance à une fenêtre : le monde ne sait pas comment il est affiché.
 Coordonnées (x, y) : x vers la droite, y vers le bas. La case (x, y) se lit walls[y][x].
 
+Le hasard (ticket 1.5) : chaque partie a sa graine (self.seed). Même graine = même carte, mêmes
+zombies, mêmes objets, et même suite d'événements aléatoires pendant la partie.
+
 Ordre d'un tour (toujours le même) :
   1. le joueur agit (se déplace, attaque ou se soigne) ;
   2. chaque zombie agit, dans l'ordre de la liste (attaque s'il est adjacent, sinon avance) ;
@@ -11,6 +14,7 @@ Ordre d'un tour (toujours le même) :
 """
 
 import random
+from collections import deque
 from dataclasses import asdict, dataclass
 
 from .actions import MOVES, Action
@@ -28,12 +32,16 @@ class WorldConfig:
     zombie_hp: int = 2
     zombie_damage: int = 1
     min_spawn_distance: int = 5  # distance minimale (Manhattan) au joueur
+
     place_items: bool = True  # poser une arme et un medkit à la création (False pour les tests)
     weapon_ammo: int = 4  # balles reçues en ramassant l'arme
     weapon_range: int = 3  # portée d'un tir (distance de Manhattan, murs ignorés)
     weapon_damage: int = 2  # dégâts d'un tir : un zombie a 2 PV, un tir suffit
     punch_damage: int = 1  # dégâts d'un coup de poing (portée 1 seulement)
     medkit_heal: int = 3  # PV rendus par un medkit
+
+    wall_density: float = 0.12  # part des cases intérieures qui sont des murs (0 = arène vide)
+    random_start: bool = True  # joueur placé au hasard (False = toujours au centre)
 
 
 @dataclass
@@ -52,34 +60,72 @@ def sign(n):
     return (n > 0) - (n < 0)
 
 
+MAX_MAP_ATTEMPTS = 100  # essais pour obtenir une carte valide avant de renoncer aux murs
+
+
+def _tout_est_connecte(walls, libres, n):
+    """Vrai si, depuis la première case libre, on peut atteindre TOUTES les autres.
+
+    On explore de proche en proche (parcours en largeur). Sans cette garantie, une carte
+    aléatoire pourrait enfermer le joueur, ou une arme, dans une poche entourée de murs.
+    """
+    depart = libres[0]
+    vues = {depart}
+    a_visiter = deque([depart])
+    while a_visiter:
+        x, y = a_visiter.popleft()
+        for dx, dy in MOVES.values():
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < n and 0 <= ny < n and not walls[ny][nx] and (nx, ny) not in vues:
+                vues.add((nx, ny))
+                a_visiter.append((nx, ny))
+    return len(vues) == len(libres)
+
+
+def _rng_vers_liste(rng):
+    """État complet d'un générateur aléatoire, sous une forme qui s'écrit en JSON."""
+    version, interne, gauss = rng.getstate()
+    return [version, list(interne), gauss]
+
+
+def _rng_depuis_liste(donnees):
+    """Recrée un générateur exactement dans l'état exporté par _rng_vers_liste."""
+    version, interne, gauss = donnees
+    rng = random.Random()
+    rng.setstate((version, tuple(interne), gauss))
+    return rng
+
+
 class World:
     def __init__(self, config=None, seed=None):
         self.config = config or WorldConfig()
-        self.rng = random.Random(seed)  # un générateur par monde, jamais le global
-        self.reset()
+        self._seeder = random.Random(seed)
+        self.reset(seed)
 
     @property
     def size(self):
         return self.config.size
 
     def reset(self, seed=None):
-        """Remet le monde à son état de départ. Avec `seed`, le hasard repart de cette graine."""
-        if seed is not None:
-            self.rng = random.Random(seed)
+        """Remet le monde à son état de départ (une nouvelle partie).
+
+        Pour rejouer une partie qui a posé problème, il suffit de relever son self.seed.
+        """
+        if seed is None:
+            seed = self._seeder.getrandbits(32)
+        self.seed = seed
+        self.rng = random.Random(seed)
         c = self.config
         n = c.size
         self.nb_tours = 0
         self.hp = c.max_hp
-        self.walls = [
-            [x in (0, n - 1) or y in (0, n - 1) for x in range(n)] for y in range(n)
-        ]
-        self.player = (n // 2, n // 2)
+        self.walls, self.player = self._generate_map()  # NOUVEAU (ticket 1.5)
 
-        self.has_weapon = False
-        self.ammo = 0
-        self.medkits = 0
-        self.weapon_pos = None
-        self.medkit_pos = None
+        self.has_weapon = False  # a-t-on déjà ramassé l'arme ? (reste vrai même sans balles)
+        self.ammo = 0  # balles restantes
+        self.medkits = 0  # medkits en poche
+        self.weapon_pos = None  # position de l'arme sur la carte, None si absente ou ramassée
+        self.medkit_pos = None  # idem pour le medkit
         if c.place_items:
             libres = [
                 (x, y)
@@ -99,6 +145,39 @@ class World:
         for x, y in self.rng.sample(candidates, count):
             self.zombies.append(Zombie(x, y, c.zombie_hp))
 
+    def _generate_map(self):
+        """Retourne (walls, position du joueur) : bordure + murs intérieurs au hasard.
+
+        On tire des murs, et on RECOMMENCE tant que la carte n'est pas connectée. Si aucun des
+        MAX_MAP_ATTEMPTS essais ne convient (densité absurde, carte minuscule), on se rabat sur
+        une arène vide plutôt que de planter.
+        """
+        c = self.config
+        n = c.size
+        centre = (n // 2, n // 2)
+
+        for _ in range(MAX_MAP_ATTEMPTS):
+            walls = [
+                [
+                    x in (0, n - 1) or y in (0, n - 1) or self.rng.random() < c.wall_density
+                    for x in range(n)
+                ]
+                for y in range(n)
+            ]
+            if not c.random_start:
+                walls[centre[1]][centre[0]] = False  # le départ au centre doit être libre
+            libres = [(x, y) for y in range(n) for x in range(n) if not walls[y][x]]
+            if libres and _tout_est_connecte(walls, libres, n):
+                return walls, self._choisir_depart(libres, centre)
+
+        walls = [[x in (0, n - 1) or y in (0, n - 1) for x in range(n)] for y in range(n)]
+        libres = [(x, y) for y in range(n) for x in range(n) if not walls[y][x]]
+        return walls, self._choisir_depart(libres, centre)
+
+    def _choisir_depart(self, libres, centre):
+        return self.rng.choice(libres) if self.config.random_start else centre
+
+    # ------------------------------------------------------------------ requêtes
     def in_grid(self, x, y):
         return 0 <= x < self.size and 0 <= y < self.size
 
@@ -113,6 +192,11 @@ class World:
         return None
 
     def nearest_zombie(self):
+        """NOUVEAU (ticket 1.4). Retourne (zombie, distance) du plus proche, ou (None, None).
+
+        Sert à l'attaque : on frappe toujours le zombie le plus proche.
+        En cas d'égalité, min() garde le premier de la liste.
+        """
         if not self.zombies:
             return None, None
         z = min(self.zombies, key=lambda z: manhattan((z.x, z.y), self.player))
@@ -144,7 +228,6 @@ class World:
             raise ValueError(f"({x}, {y}) est hors de la grille")
         if (x, y) == self.player or self.zombie_at(x, y) is not None:
             raise ValueError("On ne peut pas poser un mur sur le joueur ni sur un zombie")
-        # NOUVEAU (ticket 1.4) : un mur sur un objet le rendrait introuvable.
         if (x, y) in (self.weapon_pos, self.medkit_pos):
             raise ValueError("On ne peut pas poser un mur sur un objet")
         self.walls[y][x] = True
@@ -154,9 +237,8 @@ class World:
         """Joue un tour complet (voir l'ordre en haut du fichier)."""
         if self.is_done():
             raise RuntimeError("La partie est finie : appelle reset() avant de rejouer.")
-        action = Action(int(action))  # lève ValueError si le numéro n'existe pas
+        action = Action(int(action))
 
-        # 1. le joueur agit
         if action in MOVES:
             dx, dy = MOVES[action]
             x, y = self.player[0] + dx, self.player[1] + dy
@@ -244,7 +326,7 @@ class World:
     def to_dict(self):
         """Export copié : modifier le monde ensuite ne change pas le dictionnaire.
 
-        L'état du générateur aléatoire n'est pas exporté (prévu au ticket 1.5).
+        Le résultat ne contient que des nombres, listes, booléens et None : il s'écrit tel quel en JSON.
         """
         return {
             "nb_tours": self.nb_tours,
@@ -257,9 +339,11 @@ class World:
             "has_weapon": self.has_weapon,
             "ammo": self.ammo,
             "medkits": self.medkits,
-            # Un tuple n'existe pas en JSON : on exporte une liste, ou None si l'objet n'est plus là.
             "weapon_pos": list(self.weapon_pos) if self.weapon_pos else None,
             "medkit_pos": list(self.medkit_pos) if self.medkit_pos else None,
+            "seed": self.seed,
+            "rng_state": _rng_vers_liste(self.rng),  # le hasard de la partie en cours
+            "seeder_state": _rng_vers_liste(self._seeder),  # la suite des parties suivantes
         }
 
     def from_dict(self, data):
@@ -270,9 +354,11 @@ class World:
         self.player = tuple(data["player"])
         self.hp = data["hp"]
         self.zombies = [Zombie(z["x"], z["y"], z["hp"]) for z in data["zombies"]]
-        # --- NOUVEAU (ticket 1.4) ---
         self.has_weapon = data["has_weapon"]
         self.ammo = data["ammo"]
         self.medkits = data["medkits"]
         self.weapon_pos = tuple(data["weapon_pos"]) if data["weapon_pos"] else None
         self.medkit_pos = tuple(data["medkit_pos"]) if data["medkit_pos"] else None
+        self.seed = data["seed"]
+        self.rng = _rng_depuis_liste(data["rng_state"])
+        self._seeder = _rng_depuis_liste(data["seeder_state"])

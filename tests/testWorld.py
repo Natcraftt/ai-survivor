@@ -12,7 +12,10 @@ ATTENDRE = Action.ATTENDRE
 
 def monde(seed=0, **reglages):
     """Monde de test. Par défaut : aucun zombie, aucune apparition, aucun objet sur la carte."""
-    base = {"n_zombies": 0, "spawn_prob": 0.0, "place_items": False}
+    base = {
+        "n_zombies": 0, "spawn_prob": 0.0, "place_items": False,
+        "wall_density": 0.0, "random_start": False,  # arène vide, joueur au centre
+    }
     base.update(reglages)
     return World(WorldConfig(**base), seed=seed)
 
@@ -350,7 +353,8 @@ def test_les_zombies_apparus_ne_sont_jamais_sur_la_meme_case():
 
 # ================================================================== sauvegarde et reset
 def test_export_puis_reconstruction_donne_le_meme_monde():
-    w = World(seed=4)
+    # Carte fixe et sans objets : on peut poser un mur en (3, 3) sans risque de tomber sur autre chose.
+    w = World(WorldConfig(wall_density=0.0, random_start=False, place_items=False), seed=4)
     w.add_wall(3, 3)
     w.step(Action.GAUCHE)
     w.step(Action.HAUT)
@@ -391,7 +395,8 @@ def test_le_monde_reconstruit_est_independant_des_donnees():
 
 
 def test_reset_remet_la_carte_les_pv_et_les_zombies_a_zero():
-    w = World(seed=1)
+    # Carte fixe (arène vide, départ au centre) pour pouvoir vérifier des positions précises.
+    w = World(WorldConfig(wall_density=0.0, random_start=False), seed=1)
     w.add_wall(3, 3)
     jouer(w, 5, Action.DROITE)
     w.hp = 1
