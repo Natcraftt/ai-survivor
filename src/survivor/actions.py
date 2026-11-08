@@ -9,8 +9,8 @@ class Action(IntEnum):
     BAS = 2
     GAUCHE = 3
     ATTENDRE = 4
-    ATTAQUER = 5
-    SOIGNER = 6
+    ATTAQUER = 5  # frappe le zombie le plus proche (tir si on a des balles, sinon coup de poing)
+    SOIGNER = 6  # utilise un medkit
 
 
 MOVES = {
@@ -19,3 +19,6 @@ MOVES = {
     Action.BAS: (0, 1),
     Action.GAUCHE: (-1, 0),
 }
+
+
+N_ACTIONS = len(Action)
