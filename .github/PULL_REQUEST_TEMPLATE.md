@@ -1,8 +1,9 @@
-## RÃ©sumÃ©
 
-DÃ©cris ici les changements apportÃ©s.
+## Résumé
 
-## Ticket associÃ©
+Décris ici les changements apportés.
+
+## Ticket associé
 
 Closes #
 
@@ -12,10 +13,10 @@ Closes #
 - [ ] La destination est `dev`
 - [ ] Si cette PR vise `main`, sa source est exclusivement `dev`
 
-## VÃ©rifications
 
-- [ ] Tests ajoutÃ©s ou mis Ã  jour
+## Vérifications
+- [ ] Tests ajoutés ou mis à jour
 - [ ] `ruff check .` passe
 - [ ] `pytest -q` passe
-- [ ] Aucun changement non liÃ© au ticket
-- [ ] RÃ©Ã©valuation IA sur scÃ©narios fixes si le cerveau ou le monde change
+- [ ] Aucun changement non lié au ticket
+- [ ] Réévaluation IA sur scénarios fixes si le cerveau ou le monde change

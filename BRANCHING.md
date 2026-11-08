@@ -3,12 +3,13 @@
 ## Branches principales
 
 - `main` : version stable. Aucun push direct.
-- `dev` : branche d'intÃ©gration.
+- `dev` : branche d'intégration.
 - `feature/M0-nom` : travail du jalon M0.
 - `feature/M1-nom` : travail du jalon M1.
 - etc.
 
-## DÃ©velopper un ticket
+
+## Développer un ticket
 
 Toujours partir de `dev` :
 
@@ -26,33 +27,20 @@ git commit -m "feat(M0): description"
 git push -u origin feature/M0-nom
 ```
 
-CrÃ©er ensuite une Pull Request :
 
-```text
-feature/M0-nom -> dev
-```
+Créer ensuite une Pull Request : `feature/M0-nom -> dev`.
 
-La PR doit mentionner le ticket :
+La PR doit mentionner le ticket, par exemple `Closes #123`.
 
-```text
-Closes #123
-```
+## Intégration
 
-## IntÃ©gration
+Les branches de fonctionnalité sont fusionnées dans `dev` par Pull Request.
 
-Les branches de fonctionnalitÃ© sont fusionnÃ©es dans `dev` par Pull Request.
-
-Quand `dev` est suffisamment stable et validÃ©e :
-
-```text
-dev -> main
-```
-
-Cette PR est la seule maniÃ¨re normale d'intÃ©grer du code dans `main`.
+Quand `dev` est suffisamment stable et validée, ouvrir une PR `dev -> main`.
+C'est la seule manière normale d'intégrer du code dans `main`.
 
 ## Interdictions
-
 - Ne jamais pousser directement sur `main`.
 - Ne jamais fusionner une branche feature directement dans `main`.
-- Ne jamais utiliser `main` comme branche de dÃ©veloppement.
-- Ne pas contourner les vÃ©rifications CI.
+- Ne jamais utiliser `main` comme branche de développement.
+- Ne pas contourner les vérifications CI.

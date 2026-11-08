@@ -1,6 +1,7 @@
 ---
-name: FonctionnalitÃ©
-about: Nouvelle mÃ©canique ou amÃ©lioration du projet
+
+name: Fonctionnalité
+about: Nouvelle mécanique ou amélioration du projet
 title: ""
 labels: feature
 assignees: ""
@@ -8,26 +9,25 @@ assignees: ""
 
 ## Objectif
 
-Quel problÃ¨me cette fonctionnalitÃ© doit-elle rÃ©soudre ?
+
+Quel problème cette fonctionnalité doit-elle résoudre ?
 
 ## Description
 
-DÃ©cris le comportement attendu.
+Décris le comportement attendu.
 
-## Ã‰lÃ©ments concernÃ©s
-
+## Éléments concernés
 - Observations :
 - Actions :
 - Besoins :
-- Ã‰vÃ©nements :
-- SystÃ¨mes concernÃ©s :
+- Événements :
+- Systèmes concernés :
 
-## CritÃ¨res d'acceptation
-
-- [ ] 
-- [ ] 
-- [ ] 
+## Critères d'acceptation
+- [ ]
+- [ ]
+- [ ]
 
 ## Tests
 
-Comment vÃ©rifier que la fonctionnalitÃ© fonctionne ?
+Comment vérifier que la fonctionnalité fonctionne ?

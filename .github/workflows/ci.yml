@@ -14,37 +14,35 @@ permissions:
 
 jobs:
   ci:
-    name: Tests et qualitÃ©
+
+    name: Tests et qualité
     runs-on: ubuntu-latest
-
     steps:
-      - name: RÃ©cupÃ©ration du dÃ©pÃ´t
+      - name: Récupération du dépôt
         uses: actions/checkout@v4
-
       - name: Installation de Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: pip
 
       - name: Installation des outils
         run: |
           python -m pip install --upgrade pip
           pip install ruff pytest
 
-      - name: Installation des dÃ©pendances du projet
+      - name: Installation des dépendances du projet
         run: |
           if [ -f requirements.txt ]; then
             pip install -r requirements.txt
           fi
 
-      - name: VÃ©rification Ruff
+      - name: Vérification Ruff
         run: ruff check .
-
       - name: Tests Pytest
         run: |
           if [ -d tests ]; then
             pytest -q
           else
             echo "Aucun dossier tests pour le moment."
+
           fi
