@@ -1,11 +1,13 @@
 # Workflow Git
 
 ## Branches principales
+
 - `main` : version stable. Aucun push direct.
 - `dev` : branche d'intégration.
 - `feature/M0-nom` : travail du jalon M0.
 - `feature/M1-nom` : travail du jalon M1.
 - etc.
+
 
 ## Développer un ticket
 
@@ -24,6 +26,7 @@ git add .
 git commit -m "feat(M0): description"
 git push -u origin feature/M0-nom
 ```
+
 
 Créer ensuite une Pull Request : `feature/M0-nom -> dev`.
 

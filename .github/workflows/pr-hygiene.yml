@@ -2,6 +2,7 @@ name: PR hygiene
 
 on:
   pull_request:
+
     types: [opened, edited, synchronize, reopened]
 
 permissions:
@@ -10,6 +11,7 @@ permissions:
 
 jobs:
   validate:
+
     name: Vérification des règles de branches
     runs-on: ubuntu-latest
     steps:
@@ -23,11 +25,13 @@ jobs:
             const body = pr.body || "";
 
             if (base === "main" && head !== "dev") {
+
               core.setFailed("La branche main ne peut recevoir une PR que depuis dev.");
               return;
             }
 
             if (base === "dev" && !head.startsWith("feature/") && head !== "dev") {
+
               core.setFailed("Une PR vers dev doit provenir d'une branche feature/Mx.");
               return;
             }

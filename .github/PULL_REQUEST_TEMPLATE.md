@@ -1,3 +1,4 @@
+
 ## Résumé
 
 Décris ici les changements apportés.
@@ -7,9 +8,11 @@ Décris ici les changements apportés.
 Closes #
 
 ## Branche
+
 - [ ] Cette PR vient d'une branche `feature/Mx-nom`
 - [ ] La destination est `dev`
 - [ ] Si cette PR vise `main`, sa source est exclusivement `dev`
+
 
 ## Vérifications
 - [ ] Tests ajoutés ou mis à jour

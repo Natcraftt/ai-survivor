@@ -1,0 +1,12 @@
+{
+  "python": "3.12.10",
+  "plateforme": "Windows-11-10.0.26200-SP0",
+  "mesures": {
+    "resets_par_s": 3208.8,
+    "pas_par_s": 401514.5,
+    "pas_politique_par_s": 73162.6,
+    "parties_par_min": 89440.8,
+    "longueur_moyenne_partie": 49.1,
+    "pas_gym_par_s": 34625.3
+  }
+}

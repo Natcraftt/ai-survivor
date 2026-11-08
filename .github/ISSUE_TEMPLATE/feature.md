@@ -1,4 +1,5 @@
 ---
+
 name: Fonctionnalité
 about: Nouvelle mécanique ou amélioration du projet
 title: ""
@@ -7,6 +8,7 @@ assignees: ""
 ---
 
 ## Objectif
+
 
 Quel problème cette fonctionnalité doit-elle résoudre ?
 
